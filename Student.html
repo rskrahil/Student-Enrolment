@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="en">
+<head>
+<title>Student Enrollment</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"
+href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script
+src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script
+src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div class="Page-header text-center">
+<h2>Student form</h2>
+</div>
+<form id="studform" method="get">
+      <div class="form-group">
+           <label>Student Roll no :  </label>
+           <input type="text" id="studroll" class="form-control" onchange="getStud();">
+      </div>
+       
+      <div class="form-group">
+           <label>Student Name :  </label>
+           <input type="text" id="studname" class="form-control">
+      </div>
+
+      <div class="form-group">
+           <label>Student Class :  </label>
+           <input type="text" id="studclass" class="form-control">
+      </div>
+
+
+      <div class="form-group">
+           <label>Student Address :  </label>
+           <input type="text" id="studadd" class="form-control">
+      </div>
+
+
+      <div class="form-group">
+           <label>Student Enrolment date :  </label>
+           <input type="text" id="studenrol" class="form-control">
+      </div>
+
+      <div class="form-group text-center">
+           <button type="button" class="btn btn-lg btn-primary" id="save" onclick="saveData();" > Save </button>
+           <button type="button" class="btn btn-lg btn-primary" id="update" onclick="changeData();" > Update </button>
+           <button type="button" class="btn btn-lg btn-primary" id="reset" onclick="resetForm();" > Reset </button>
+      </div>
+    </form>
+ </div>
+
+<script type="text/javascript" src="https://login2explore.com/jpdb/resources/js/0.0.3/jpdb-commons.js"></script>
+<script> 
+var jpdbBaseUrl = "http://api.login2explore.com:5577";
+var jpdbIML = "/api/iml";
+var jpdbIRL = "/api/irl";
+var connToken = "90932973|-31949275626470580|90949401";
+var studDBName= "Student1";
+var studRelationName="Student1-Rel";
+
+$("#studroll").focus();
+
+function resetform() {
+$("#studroll").val("");
+$("#studname").val("");
+$("#studclass").val("");
+$("#studadd").val("");
+$("#studenrol").val("");
+$("#studroll").prop("disabled",false);
+$("#save").prop("disabled",true);
+$("#update").prop("disabled",true);
+$("#reset").prop("disabled",true);
+$("studroll").focus();
+}
+
+function saveData() {
+   var jsonStrObj=validateData();
+   if(jsonStrObj=="") {
+         return "";
+   }
+  
+   var putRequest=createPUTRequest(connToken,jsonStrObj,studDBName,studRelationName);
+   jQuery.ajaxSetup({async: false});
+   var resJsonObj=executeCommandAtGivenBaseUrl(putRequest,jpdbBaseURL,jpdbIML);
+   jQuery.ajaxSetup({async: true});
+   resetForm();
+   $("#studroll").focus();
+}
+
+function validateData() {
+   var studroll,studname,studclass,studadd,studenrol;
+   studroll=$("#studroll").val();
+   studname=$("#studname").val();
+   studclass=$("#studclass").val();
+   studadd=$("#studadd").val();
+   studenrol=$("#studenrol").val();
+
+   if(studroll === "") {
+         alert("Student Roll number is missing");
+         $("#studroll").focus();
+         return "";
+   }
+
+   if(studname === "") {
+         alert("Student Name is missing");
+         $("#studname").focus();
+         return "";
+   }
+
+   if(studclass === "") {
+         alert("Student Class is missing");
+         $("#studclass").focus();
+         return "";
+   }
+
+   if(studadd === "") {
+         alert("Student Address is missing");
+         $("#studadd").focus();
+         return "";
+   }
+   
+   if(studenrol === "") {
+         alert("Student Enrolment Date is missing");
+         $("#studenrol").focus();
+         return "";
+   }
+
+   var jsonStrObj = {
+       Roll: studroll,
+       Name: studname,
+       Class: studclass,
+       Address: studadd,
+       Enrolmentdate: studenrol
+};
+return JSON.stringify(jsonStrObj);
+}
+
+function changeData() {
+   $("#update").prop("disabled",true);
+   var jsonStrObj=validateData();
+   if(jsonStrObj=="") {
+         return "";
+   }
+  
+   var updateRequest=createUPDATERequest(connToken,jsonStrObj,studDBName,studRelationName,localStorage.getItem("recno");
+   jQuery.ajaxSetup({async: false});
+   var resJsonObj=executeCommandAtGivenBaseUrl(updateRequest,jpdbBaseURL,jpdbIML);
+   jQuery.ajaxSetup({async: true});
+   resetForm();
+   $("#studroll").focus();
+}
+
+function getStud() {
+    var studrollJsonObj=getStudrollJsonObj();
+    var getRequest=createGet_BY_KEYRequest(connToken,studDBName,studRealtionName,studrollJsonObj);
+    jQuery.ajaxSetup({async:false});
+    var resJsonObj=executeCommandAtGivenBaseUrl(getRequest,jpdbBaseURL,jpdbIRL);
+    jQuery.ajaxSetup({async:true});
+    if(resJsonObj.status === 400) {
+        $("#save").prop("disabled",false);
+        $("#reset").prop("disabled",false);
+        $("#save").focus();
+     } else if(resJsonObj.status === 200) {
+         $("#studroll").prop("disabled",true);
+         fillData(resJsonObj);
+         $("#update").prop("disabled",false);
+         $("#reset").prop("disabled",false);
+         $("#studname").focus();
+      }
+ }
+
+function fillData(jsonObj) {
+     saveRecNo2LS(jsonObj);
+     var record=JSON.parse(jsonObj.data).record;
+     $("#studname").val(record.name);
+     $("#studclass").val(record.Class);
+     $("#studadd").val(record.Address);
+     $("#studenrol").val(record.EnrolmentDate);
+}
+
+function getStudrollJsonObj() {
+     var studroll=$("#studroll").val();
+     var jsonStr= {
+            Roll:studroll
+     };
+     return JSON.stringify(jsonStr);
+ }
+
+function saveRecNo2LS(jsonObj) {
+      var lvData=JSON.parse(jsonObj.data);
+      localStorage.setItem("recno",lvData.rec_no);
+
+  }
+
+</script>
+</body>
+</html>
